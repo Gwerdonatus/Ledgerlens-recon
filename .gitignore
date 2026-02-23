@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+reports/
+.env
+.pytest_cache/
+ledgerlens_recon.egg-info/
