@@ -1,16 +1,13 @@
 from __future__ import annotations
 
 import os
-from dataclasses import asdict
-from datetime import datetime
-from typing import Dict, Iterable, List
+from datetime import datetime, timezone
 
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 from ..reconciliation.models import ReconcileRow, ReconcileStatus
-
 
 # Simple fills (keep readable on default Excel themes)
 FILL_GREEN = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
@@ -31,7 +28,7 @@ def _fill_for_status(status: ReconcileStatus) -> PatternFill:
     return FILL_GRAY
 
 
-def write_report(rows: List[ReconcileRow], summary: Dict[str, int], out_path: str) -> str:
+def write_report(rows: list[ReconcileRow], summary: dict[str, int], out_path: str) -> str:
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
 
     wb = Workbook()
@@ -51,7 +48,7 @@ def write_report(rows: List[ReconcileRow], summary: Dict[str, int], out_path: st
         r += 1
 
     ws_summary[f"A{r+1}"] = "generated_at_utc"
-    ws_summary[f"B{r+1}"] = datetime.utcnow().isoformat() + "Z"
+    ws_summary[f"B{r+1}"] = datetime.now(timezone.utc).isoformat()
 
     # Details sheet
     ws = wb.create_sheet("reconciliation")
@@ -75,17 +72,19 @@ def write_report(rows: List[ReconcileRow], summary: Dict[str, int], out_path: st
     rows_sorted = sorted(rows, key=lambda x: x.transaction_id)
 
     for row in rows_sorted:
-        ws.append([
-            row.transaction_id,
-            row.status.value,
-            float(row.confidence),
-            row.currency,
-            row.stripe_amount,
-            row.internal_amount,
-            row.stripe_time.isoformat() if row.stripe_time else None,
-            row.internal_time.isoformat() if row.internal_time else None,
-            row.notes,
-        ])
+        ws.append(
+            [
+                row.transaction_id,
+                row.status.value,
+                float(row.confidence),
+                row.currency,
+                row.stripe_amount,
+                row.internal_amount,
+                row.stripe_time.isoformat() if row.stripe_time else None,
+                row.internal_time.isoformat() if row.internal_time else None,
+                row.notes,
+            ]
+        )
 
     # Apply row fills
     for i in range(2, 2 + len(rows_sorted)):

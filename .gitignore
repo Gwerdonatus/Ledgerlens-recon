@@ -5,3 +5,7 @@ reports/
 .env
 .pytest_cache/
 ledgerlens_recon.egg-info/
+.coverage
+coverage.xml
+build/
+dist/

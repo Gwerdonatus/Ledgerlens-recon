@@ -1,9 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import os
-from pathlib import Path
-from typing import Optional
 
 from dotenv import load_dotenv
 
@@ -26,7 +23,7 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
-def run_reconcile(stripe_csv: Optional[str], internal_csv: Optional[str], out_path: str) -> int:
+def run_reconcile(stripe_csv: str | None, internal_csv: str | None, out_path: str) -> int:
     load_dotenv()
     cfg = Config.from_env()
     log = setup_logging()
@@ -39,7 +36,9 @@ def run_reconcile(stripe_csv: Optional[str], internal_csv: Optional[str], out_pa
     # Stripe source selection
     if cfg.stripe_api_key:
         log.info("Using Stripe API source.")
-        stripe_txs = StripeClient(cfg.stripe_api_key).list_balance_transactions(limit=100)
+        stripe_txs = StripeClient(cfg.stripe_api_key).list_balance_transactions(
+            limit=cfg.stripe_fetch_limit
+        )
     elif stripe_csv:
         log.info(f"Using Stripe CSV source: {stripe_csv}")
         stripe_txs = load_stripe_from_csv(stripe_csv)
@@ -49,7 +48,7 @@ def run_reconcile(stripe_csv: Optional[str], internal_csv: Optional[str], out_pa
     # Internal source selection
     if cfg.database_url:
         log.info("Using database source.")
-        internal_txs = DbClient(cfg.database_url).fetch_transactions(limit=5000)
+        internal_txs = DbClient(cfg.database_url).fetch_transactions(limit=cfg.database_fetch_limit)
     elif internal_csv:
         log.info(f"Using internal CSV source: {internal_csv}")
         internal_txs = load_internal_from_csv(internal_csv)

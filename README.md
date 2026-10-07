@@ -28,12 +28,14 @@ This project focuses on **clarity, idempotency, and maintainability**.
 
 - Modular architecture (not a single script)
 - Data sources:
-  - Stripe API client (with a mock mode)
+  - Stripe API client with bounded cursor pagination (plus a CSV mock mode)
   - DB client via SQLAlchemy (with a mock CSV mode)
 - Matching logic:
   - primary match: `transaction_id`
-  - validation: amount tolerance + timestamp tolerance
-  - categorization into matched/mismatched/missing
+  - exact `Decimal` arithmetic—no binary floating-point money calculations
+  - currency-aware Stripe conversion, including zero- and three-decimal currencies
+  - validation: currency, amount tolerance, timestamp tolerance, and duplicate IDs
+  - categorization into matched, mismatched, invalid, and missing records
 - Confidence scoring (0.0–1.0)
 - Excel reporting via `openpyxl`:
   - Summary sheet
@@ -42,7 +44,7 @@ This project focuses on **clarity, idempotency, and maintainability**.
   - Structured logging (JSON)
   - Config-driven thresholds
   - CLI entry point
-  - Unit tests for core matching logic
+  - CI across Python 3.10–3.12 with linting, formatting, package builds, and an 80% coverage gate
 
 ---
 
@@ -61,15 +63,17 @@ ledgerlens_recon/
 │   │   └── excel_writer.py
 │   ├── utils/
 │   │   ├── logging.py
-│   │   ├── time.py
-│   │   └── validation.py
+│   │   └── time.py
 │   ├── config.py
 │   └── main.py
 ├── examples/
 │   ├── internal_transactions.csv
 │   └── stripe_transactions.csv
 ├── tests/
-│   └── test_matcher.py
+│   ├── test_config.py
+│   ├── test_io_and_cli.py
+│   ├── test_matcher.py
+│   └── test_stripe_client.py
 ├── requirements.txt
 ├── .env.example
 └── README.md
@@ -131,6 +135,25 @@ Thresholds can be set via env variables:
 
 - `AMOUNT_TOLERANCE` (default: 0.50)
 - `TIME_TOLERANCE_SECONDS` (default: 900)
+- `STRIPE_FETCH_LIMIT` (default: 1000)
+- `DATABASE_FETCH_LIMIT` (default: 5000)
+
+Values are validated at startup. Fetch limits bound each reconciliation run while
+Stripe's cursor pagination ensures the configured range is fully traversed.
+
+---
+
+## Development checks
+
+Install the development dependencies and run the same checks enforced by CI:
+
+```bash
+pip install -e '.[dev]'
+ruff check .
+black --check .
+pytest --cov=ledgerlens_recon --cov-fail-under=80
+python -m build
+```
 
 ---
 

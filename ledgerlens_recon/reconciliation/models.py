@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+from decimal import Decimal
 from enum import Enum
-from typing import Optional
 
 
 @dataclass(frozen=True)
 class Transaction:
     transaction_id: str
-    amount: float
+    amount: Decimal
     currency: str
     created_at: datetime
     source: str  # "stripe" or "internal"
@@ -27,10 +27,10 @@ class ReconcileStatus(str, Enum):
 @dataclass(frozen=True)
 class ReconcileRow:
     transaction_id: str
-    stripe_amount: Optional[float]
-    internal_amount: Optional[float]
-    stripe_time: Optional[datetime]
-    internal_time: Optional[datetime]
+    stripe_amount: Decimal | None
+    internal_amount: Decimal | None
+    stripe_time: datetime | None
+    internal_time: datetime | None
     currency: str
     status: ReconcileStatus
     confidence: float

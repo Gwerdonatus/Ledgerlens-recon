@@ -5,14 +5,14 @@ import logging
 import os
 import sys
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class JsonFormatter(logging.Formatter):
     """Simple JSON formatter for structured logs."""
 
     def format(self, record: logging.LogRecord) -> str:
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "ts": datetime.now(timezone.utc).isoformat(),
             "level": record.levelname,
             "logger": record.name,
@@ -23,7 +23,7 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(payload, ensure_ascii=False)
 
 
-def setup_logging(name: str = "ledgerlens", level: Optional[str] = None) -> logging.Logger:
+def setup_logging(name: str = "ledgerlens", level: str | None = None) -> logging.Logger:
     level = (level or os.getenv("LOG_LEVEL", "INFO")).upper()
     logger = logging.getLogger(name)
     logger.setLevel(level)
