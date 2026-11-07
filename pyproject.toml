@@ -17,6 +17,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+wallet = [
+  "Django>=5.2,<5.3",
+  "djangorestframework>=3.16,<3.17",
+  "psycopg[binary]>=3.2,<4",
+]
 dev = [
   "build>=1.2.0",
   "pytest>=8.0",
@@ -29,7 +34,7 @@ dev = [
 include-package-data = true
 
 [tool.setuptools.packages.find]
-include = ["ledgerlens_recon*"]
+include = ["ledgerlens_recon*", "wallet_service*"]
 namespaces = true
 
 [tool.ruff]
@@ -47,3 +52,6 @@ target-version = ["py310"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+
+[tool.coverage.run]
+omit = ["wallet_service/wallet/tests.py", "wallet_service/wallet/migrations/*"]

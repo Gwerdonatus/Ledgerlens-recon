@@ -1,0 +1,2 @@
+include manage.py compose.wallet.yml
+recursive-include docs *.md

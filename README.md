@@ -12,6 +12,10 @@ It generates an **Excel report** with highlighted anomalies and a summary sheet.
 
 ---
 
+## Fictional wallet transfer API
+
+The optional Django/DRF + PostgreSQL wallet extension adds atomic transfers, concurrent-safe idempotency, account ownership checks, transaction history and ledger reconciliation. [Setup, demonstration and design notes](docs/wallet.md) · [Recorded verification results](docs/wallet-verification.md).
+
 ## Why this exists
 
 Many teams jump straight to orchestration (Airflow/Kafka) for problems that are:
