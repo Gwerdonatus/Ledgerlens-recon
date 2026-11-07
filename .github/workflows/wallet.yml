@@ -1,0 +1,35 @@
+name: Wallet PostgreSQL correctness
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  wallet:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ledgerlens
+          POSTGRES_PASSWORD: ledgerlens-local
+          POSTGRES_DB: ledgerlens
+        ports: ["55432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ledgerlens"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e '.[dev,wallet]'
+      - run: python manage.py makemigrations --check --dry-run
+      - run: coverage run --source=wallet_service manage.py test wallet_service.wallet --noinput
+      - run: coverage report --fail-under=80
+      - run: python manage.py migrate --noinput
+      - run: python manage.py demo_wallet

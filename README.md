@@ -1,6 +1,6 @@
 # LedgerLens Recon
 
-A small, production-minded **payment reconciliation CLI** that matches transactions between:
+A Python payment reconciliation CLI with an optional Django/DRF wallet service. The CLI matches transactions between:
 
 - **Stripe** (API or local mock)
 - an **internal database** (PostgreSQL via SQLAlchemy *or* local CSV mock)
@@ -11,6 +11,19 @@ It generates an **Excel report** with highlighted anomalies and a summary sheet.
 > It’s designed to show how to structure a reconciliation job that’s simple, auditable, and safe to rerun.
 
 ---
+
+## Fictional wallet transfer API
+
+The wallet service handles fictional GBP transfers with one database transaction, account locks and persisted idempotency results. Two concurrent £80 withdrawals against £100 produce one success and one rejection; replaying the successful request does not debit again. It includes source ownership checks, account history and internal ledger reconciliation. It does not move real funds or automatically connect wallet records to the CLI's external reconciliation sources.
+
+| Read | Purpose |
+| --- | --- |
+| [Wallet quickstart](docs/wallet.md) | Install, seed, transfer and run the concurrency demonstration |
+| [API contract](docs/wallet-api.md) | Request/response shapes, access rules, errors and retry semantics |
+| [Architecture](docs/wallet-architecture.md) | Data model, invariants, transaction sequence and failure boundaries |
+| [ADR 0001](docs/decisions/0001-wallet-transfers.md) | Decisions, alternatives, consequences and follow-ups |
+| [Local runbook](docs/wallet-operations.md) | Configuration, diagnosis, reconciliation investigation and data lifecycle |
+| [Verification record](docs/wallet-verification.md) | Test-to-requirement mapping, measured results, CI evidence and gaps |
 
 ## Why this exists
 
@@ -74,6 +87,10 @@ ledgerlens_recon/
 │   ├── test_io_and_cli.py
 │   ├── test_matcher.py
 │   └── test_stripe_client.py
+├── wallet_service/             # Django settings, API, transaction service and tests
+├── docs/                       # Wallet contract, architecture, ADR, runbook and evidence
+├── manage.py
+├── compose.wallet.yml          # Local PostgreSQL for the wallet
 ├── requirements.txt
 ├── .env.example
 └── README.md
@@ -157,12 +174,14 @@ python -m build
 
 ---
 
-## Notes on idempotency
+## CLI rerun behaviour
 
-This job is safe to rerun:
+The reconciliation CLI is safe to rerun:
 - report output is deterministic (stable ordering)
 - no external writes are performed besides the report file
 - failures are logged and surfaced clearly
+
+The wallet writes database state and has a separate [idempotency and retry contract](docs/wallet-api.md#retry-and-conflict-semantics).
 
 ---
 
